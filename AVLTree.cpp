@@ -1,179 +1,112 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <stack>
-#include "string"
-#include <math.h>
+
 using namespace std;
 
-
-
-struct Nodo{
-	int val;
-	Nodo* hijos[2];
-	Nodo(int valor):val(valor){hijos[1]=NULL;hijos[0]=NULL;}
+template <class T>
+struct node{
+    T valor;
+    node<T>* hijos[2];
+    int nivel = 0;
+    node(T dato){
+        valor = dato;
+        hijos[0] = hijos[1] = NULL;
+    }
 };
 
-class ArbolRB{
-private:
-	Nodo* head;
+template <class T, class Q>
+class AVL_Tree{
 public:
-	ArbolRB(){head=NULL;}
-	int altura(Nodo *n,int l,int r){
-		if(!n)
-			return 0;
-		if(n->hijos[0]){
-			l=altura(n->hijos[0],l,r)+1;
-		}
-		if(n->hijos[1]){
-			r=altura(n->hijos[1],0,r)+1;
-		}
-		if(l>r)
-			return l;
-		else
-			return r;
-	}
-	bool balancear(Nodo **n){
-		int l=1,r=1;
-		Nodo* temp;
-		if((altura((*n)->hijos[0],l,r)-altura((*n)->hijos[1],l,r)>=2)){
-			if(altura((*n)->hijos[0]->hijos[0],l,r)>altura((*n)->hijos[0]->hijos[1],l,r)){
-				temp=(*n)->hijos[0];
-				(*n)->hijos[0]=(*n)->hijos[0]->hijos[1];
-				temp->hijos[1]=*n;
-				*n=temp;
-			}
-			else{
-				temp=(*n)->hijos[0]->hijos[1];
-				(*n)->hijos[0]->hijos[1]=temp->hijos[0];
-				temp->hijos[0]=(*n)->hijos[0];
-				(*n)->hijos[0]=temp->hijos[1];
-				temp->hijos[1]=*n;
-				*n=temp;
-			}
-			return 1;
-		}
-		if((altura((*n)->hijos[0],l,r)-altura((*n)->hijos[1],l,r)<=-2)){
-			if(altura((*n)->hijos[1]->hijos[0],l,r)>altura((*n)->hijos[1]->hijos[1],l,r)){
-				temp=(*n)->hijos[1]->hijos[0];
-				(*n)->hijos[1]->hijos[0]=temp->hijos[1];
-				temp->hijos[1]=(*n)->hijos[1];
-				(*n)->hijos[1]=temp->hijos[0];
-				temp->hijos[0]=*n;
-				*n=temp;
-			}
-			else{
-				temp=(*n)->hijos[1];
-				(*n)->hijos[1]=(*n)->hijos[1]->hijos[0];
-				temp->hijos[0]=*n;
-				*n=temp;
-			}
-			return 1;
-		}
-		return 0;
-	}
-	bool buscar(int val, Nodo **&p,stack<Nodo**> &recorrido){
-		while(*p){
-			recorrido.push(p);
-			if(val!=(*p)->val)
-				p=&((*p)->hijos[val>(*p)->val]);
-			else
-				break;
-		}
-		if(*p&&(*p)->val==val)
-			  return 1;
-		else
-			return 0;
-	}
-	void insertar(int val){
-		Nodo** p= &head;
-		stack<Nodo**> recorrido;
-		if(!buscar(val,p,recorrido))
-			*p = new Nodo(val);
-		while(!recorrido.empty()&&!balancear(recorrido.top())){
-			recorrido.pop();
-		}
-	}
-	void eliminar(int val){
-		Nodo** p= &head;
-		stack<Nodo**> recorrido;
-		if(buscar(val,p,recorrido)){
-			if((*p)->hijos[0]&&(*p)->hijos[1]){
-				Nodo* aux = *p;
-				p=&((*p)->hijos[0]);
-				while((*p)->hijos[1])
-					p=&((*p)->hijos[1]);
-				aux->val=(*p)->val;
-			}
-			Nodo* temp=*p;
-			*p=(*p)->hijos[(*p)->hijos[1]!=NULL];
-			delete(temp);
-			recorrido.pop();
-			while(!recorrido.empty()&&!balancear(recorrido.top())){
-				recorrido.pop();
-			}
-		}
-	}
-	void print2(Nodo* p){
-		if(p->hijos[0]){
-			print2(p->hijos[0]);
-		}
-		cout<<p->val<<",";
-		if(p->hijos[1]){
-			print2(p->hijos[1]);
-		}
-	}
-	void print(){
-		Nodo* p=head;
-		if(p){
-			if(p->hijos[0]){
-				print2(p->hijos[0]);
-			}
-			cout<<p->val<<",";
-			if(p->hijos[1]){
-				print2(p->hijos[1]);
-			}
-		}
-		cout<<endl;
-	}
-	void lvlprint(){
-		queue<Nodo*> nodos;
-		Nodo* temp;
-		int gus=altura(head,0,0)+1;
-		gus=2*pow(2,gus);
-		string gus2;
-		if(head)
-			nodos.push(head);
-		while(!(nodos.empty())){
-			unsigned int i=0, tam=nodos.size();
-			for(; i<tam;i++){
-				temp=nodos.front();
-				nodos.pop();
-				gus2=string(" ",gus);
-				cout<<temp->val<<",";
-				if(temp->hijos[0])
-					nodos.push(temp->hijos[0]);
-				if(temp->hijos[1])
-					nodos.push(temp->hijos[1]);
-				gus /=2;
-			}
-			cout<<endl;
-		}
-	}
+    node<T>* raiz = NULL;
+    Q comparacion;
+    AVL_Tree(){};
+    void actu_altura(node<T>* hola){
+        int izq = 0;
+        int der = 0;
+        if(hola->hijos[0]) izq += hola->hijos[0]->nivel + 1;
+        if(hola->hijos[1]) der += hola->hijos[1]->nivel + 1;
+        if(izq>der) hola->nivel = izq;
+        else hola->nivel = der;
+    }
+    bool balanceo(node<T> *hola){
+
+    }
+    bool buscar(T x, node<T> **&p, vector<node<T>*> &res){
+        for(p = &raiz; (*p) && ((*p)->valor != x); p = &((*p)->hijos[comparacion((*p)->valor,x)])){
+            res.push_back(*p);
+        };
+        return (*p) != 0;
+    };
+    bool insertar(T x){
+        node<T> **p;
+        vector<node<T>*> recorrido;
+        if(buscar(x, p, recorrido)) return 0;
+        *p = new node<T>(x);
+        for(int i = recorrido.size()-1; i >= 0; i--){
+            actu_altura(recorrido[i]);
+        }
+        return 1;
+    };
+    bool eliminar(T x){
+        node<T> **p;
+        vector<node<T>*> recorrido;
+        if(!buscar(x, p, recorrido)) return 0;
+        if((*p)->hijos[0] && (*p)->hijos[1]){
+            node<T> **q = p;
+            q = &((*q)->hijos[0]);
+            while(*q){
+                q = &((*q)->hijos[1]);
+            }
+            (*p)->valor = (*q)->valor;
+            p = q;
+        }
+        node<T> *t = *p;
+        *p = (*p)->hijos[(*p)->hijos[1] != 0];
+        delete t;
+        return 1;
+    };
+    void pre_orden(node<T> *p){
+        if(p){
+            cout << "Nodo " << p->valor << "->" << "Hijos: ";
+            if(p->hijos[0]) cout << p->hijos[0]->valor << ", ";
+            else cout << "NULO, ";
+            if(p->hijos[1]) cout << p->hijos[1]->valor << " ";
+            else cout << "NULO ";
+            cout << p->nivel << endl;
+            pre_orden(p->hijos[0]);
+            pre_orden(p->hijos[1]);
+        }
+    };
+    void imprimir(){
+        pre_orden(raiz);
+    };
 };
 
-int main(int argc, char *argv[]) {
-	ArbolRB arbol;
-	arbol.insertar(1);
-	arbol.insertar(8);
-	arbol.insertar(3);
-	arbol.insertar(7);
-	arbol.insertar(2);
-	arbol.insertar(9);
-	arbol.insertar(4);
-	arbol.insertar(5);
-	arbol.insertar(6);
-	arbol.print();
-	arbol.lvlprint();
-	return 0;
+template <typename T>
+class cmp_mayor{
+public: inline bool operator()(T a, T b){
+        return (a > b);
+    }
+};
+
+template <typename T>
+class cmp_menor{
+public: inline bool operator()(T a, T b){
+        return (a < b);
+    }
+};
+
+int main(){
+    AVL_Tree<int,cmp_menor<int> > arbol;
+    arbol.insertar(1);
+    arbol.insertar(2);
+    arbol.insertar(3);
+    arbol.insertar(4);
+    arbol.insertar(5);
+    arbol.insertar(6);
+    arbol.insertar(7);
+    arbol.insertar(8);
+    arbol.insertar(9);
+    arbol.imprimir();
+    return 0;
 }
